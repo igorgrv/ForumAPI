@@ -8,7 +8,7 @@ public class Answer {
 	private String post;
 	private Topic topic;
 	private LocalDateTime creationDate = LocalDateTime.now();
-	private User author;
+	private User user;
 	private Boolean resolved = false;
 
 	@Override
@@ -68,12 +68,12 @@ public class Answer {
 		this.creationDate = creationDate;
 	}
 
-	public User getAuthor() {
-		return author;
+	public User getUser() {
+		return user;
 	}
 
-	public void setAuthor(User author) {
-		this.author = author;
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 	public Boolean getResolved() {

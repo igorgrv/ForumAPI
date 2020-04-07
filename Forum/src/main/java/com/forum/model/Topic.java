@@ -10,8 +10,8 @@ public class Topic {
 	private String title;
 	private String post;
 	private LocalDateTime creationDate = LocalDateTime.now();
-	private TopicStatus status = TopicStatus.NAO_RESPONDIDO;
-	private User author;
+	private TopicStatus status = TopicStatus.NOT_ANSWERED;
+	private User user;
 	private Course course;
 	private List<Answer> answers = new ArrayList<>();
 
@@ -86,12 +86,12 @@ public class Topic {
 		this.status = status;
 	}
 
-	public User getAuthor() {
-		return author;
+	public User getUser() {
+		return user;
 	}
 
-	public void setAuthor(User author) {
-		this.author = author;
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 	public Course getCurso() {
