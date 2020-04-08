@@ -15,11 +15,14 @@ public class TopicController {
 	@Autowired
 	private TopicRepository topicRepository;
 
-	@RequestMapping("/firstEndPoint")
-	public List<TopicDTO> list(){
-//		Topic topic = new Topic("Doubt", "API Doubt", new Course("Java", "API"));
-//		return TopicDTO.toTopic(Arrays.asList(topic, topic, topic));
-		return TopicDTO.toTopic(topicRepository.findAll());
+	@RequestMapping("/topic")
+	public List<TopicDTO> list(String courseName){
+		System.out.println(courseName);
+		if (courseName == null) {
+			return TopicDTO.toTopic(topicRepository.findAll());
+		} else {
+			return TopicDTO.toTopic(topicRepository.findByCourseName(courseName));
+		}
 	}
 	
 }

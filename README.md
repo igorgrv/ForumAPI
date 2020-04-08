@@ -16,7 +16,11 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 2. [Implementing JPA and H2 Database](#jpa)
 3. [MVC](#mvc)
 	* [Models](#models)
+	* [Repository](#repository)
 4. [Creating the first API Endpoint](#first)
+	* [Simple example:](#simple)
+	* [Simplifying the example:](#simplifying)
+	* [Adding a filter:](#filter)
 5. [Models](#models)
 6. [Models](#models)
 7. [Models](#models)
@@ -87,7 +91,7 @@ PayAttention! Create the package model inside the package.forum (where the main 
 **Understanding the models with UML:**
 <img src="https://github.com/igorgrv/ForumAPI/blob/master/UML/simplyUml.PNG?raw=true" width=600 height=500>
 
-### Repository
+### <a name="repository"></a>Repository
 * Let's create the Repositories, as: TopicRepository, CourseRepository
 ```java
 public interface TopicRepository extends JpaRepository<Topic, Long>{
@@ -101,7 +105,7 @@ public interface CourseRepository extends JpaRepository<Course, Long>{
 By default, Spring uses the Jackson library, which transforms a Java List into a .json format. <br>
 In short, Spring takes the List -> passes it to Jackson -> Jackson transforms it to .json -> Spring returns it to the browser.
 
-### An example:
+### <a name="simple"></a>Simple example:
 1. Create a **controller** package, into the _forum package_;
 2. Add the code below:
 ```java
@@ -171,7 +175,7 @@ public class TopicController {
 	}  
 ]
 ```
-### Simplifying the example:
+### <a name="simplifying"></a>Simplifying the example:
 **_@ResponseBody_**
 So that we don't have to keep using `@ResponseBody` every time, Spring has an annotation, called `@RestController`, which will tell Spring that all of the controller's methods will not return a view/page!
 
@@ -207,12 +211,13 @@ Controller:
 @RestController
 public class TopicController {
 
-	@RequestMapping("/firstEndPoint")
+		@RequestMapping("/topic")
 	public List<TopicDTO> list(){
-		Topic topic = new Topic("Doubt", "API Doubt", new Course("Java", "API"));
-		
-		return TopicDTO.toTopic(Arrays.asList(topic, topic, topic));
+//		Topic topic = new Topic("Doubt", "API Doubt", new Course("Java", "API"));
+//		return TopicDTO.toTopic(Arrays.asList(topic, topic, topic));
+		return TopicDTO.toTopic(topicRepository.findAll());
 	}
+	
 }
 ```
 Spring will return the .json below:
@@ -237,4 +242,42 @@ Spring will return the .json below:
       "creationDate":"2019-05-05T20:00:00"
    }
 ]
+```
+### <a name="filter"></a>Adding a filter to the example:
+
+And if we wanted to find a specfic topic based on the name of the course?<br> Like: `localhost:8080/topic?courseName=Spring+Boot` 
+
+1. We need to change the controller method, requiring a course name.
+	* However, **if** no course names are given, we must return all topics!
+2.  Create special filter on the TopicRepository, finding the Course by the name. <br> Like: `topicRepository.findByCourseName(courseName)` 
+3.  Search by `localhost:8080/topic?courseName=Spring+Boot` 
+```java
+@RestController
+public class TopicController {
+	
+	@Autowired
+	private TopicRepository topicRepository;
+
+	@RequestMapping("/topic")
+	public List<TopicDTO> list(String courseName){
+		System.out.println(courseName);
+		if (courseName == null) {
+			return TopicDTO.toTopic(topicRepository.findAll());
+		} else {
+			return TopicDTO.toTopic(topicRepository.findByCourseName(courseName));
+		}
+	}
+}
+
+//-------------------------------------------------------------------
+public interface TopicRepository extends JpaRepository<Topic, Long>{
+
+	List<Topic> findByCourseName(String courseName);
+	//Or
+		// List<Topic> findByCourse_Name(String courseName);
+	//Or
+		//@Query("SELECT t FROM Topic t WHERE t.course.name = :courseName")
+		// List<Topic> getByTheCourseName(@Param("courseName") String courseName);
+
+}
 ```
