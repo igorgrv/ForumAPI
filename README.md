@@ -8,15 +8,15 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 -   API Rest;
 -   BeanValidation;
 -   JPA;
--  MySQL;
+-  H2 Database;
 -  Spring Initializer/DevTools
 
 ## Summary
 1. [Starting the project](#starting)
-2. [MVC](#mvc)
+2. [Implementing JPA and H2 Database](#jpa)
+3. [MVC](#mvc)
 	* [Models](#models)
-3. [Creating the first API Endpoint](#first)
-4. [Implementing JPA and H2 Database](#jpa)
+4. [Creating the first API Endpoint](#first)
 5. [Models](#models)
 6. [Models](#models)
 7. [Models](#models)
@@ -27,6 +27,56 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 3. Add the dependencies: **Web, JPA, MySQL Connector and DevTools**;
 4. Unzip the file and import as "maven project";
 
+## <a name="jpa"></a>Implementing JPA and H2 Database
+
+As JPA and M2, have already been inserted into pom.xml, through **Spring Initializer**, we will only need to configure the H2 database, through **application.properties**.
+
+Altough, follow below the pom.xml:
+```xml
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>com.h2database</groupId>
+	<artifactId>h2</artifactId>
+</dependency>
+```
+
+
+### Why use the H2 database?
+The H2 database:
+* Requires no installation;
+* It is easy to use;
+* It works in memory, that is, it means that when you restart it, the data is lost, however, if **there was** a **data.sql** file into the **src/main/resources**, Spring is able to read and always add the data within the tables;
+ 
+Download the [data.sql](https://github.com/igorgrv/ForumAPI/blob/master/Forum/src/main/resources/data.sql)
+### Configurating the application.properties
+```
+#DataSource
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.url=jdbc:h2:mem:forum
+spring.datasource.username=sa
+spring.datasource.password=
+
+#JPA
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto = update
+spring.jpa.show-sql = true
+
+#H2
+# console.enabled allow us to have a h2 console
+# console.path is how we're going to access the h2 interface
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+```
+* Open the console by: `http://localhost:8080/h2-console`
+
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/m2.PNG?raw=true" width=370 height=300>
+
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/m22.PNG?raw=true" width=550 height=300>
+
 ## <a name="mvc"></a>MVC
 ### <a name="models"></a>Models
 
@@ -36,6 +86,16 @@ PayAttention! Create the package model inside the package.forum (where the main 
 
 **Understanding the models with UML:**
 <img src="https://github.com/igorgrv/ForumAPI/blob/master/UML/simplyUml.PNG?raw=true" width=600 height=500>
+
+### Repository
+* Let's create the Repositories, as: TopicRepository, CourseRepository
+```java
+public interface TopicRepository extends JpaRepository<Topic, Long>{
+}
+
+public interface CourseRepository extends JpaRepository<Course, Long>{
+}
+```
 
 ## <a name="first"></a>Creating the first API Endpoint
 By default, Spring uses the Jackson library, which transforms a Java List into a .json format. <br>
@@ -59,7 +119,7 @@ public class TopicController {
 }
 ```
 3. Spring will return the .json below:
-	* To format the .json as below, use a  [jsonFormatter](jsonformatter.curiousconcept.com/)
+	* To format the .json as below, use a  [jsonFormatter.com](jsonformatter.curiousconcept.com/)
 ```json
 [
 	{
@@ -116,7 +176,7 @@ public class TopicController {
 So that we don't have to keep using `@ResponseBody` every time, Spring has an annotation, called `@RestController`, which will tell Spring that all of the controller's methods will not return a view/page!
 
 **_DTOClass (DataTransferObject)_**
-DTOClass, is a class that will **only pass the necessary attributes**, that is, there is greater flexibility in choosing what will be in the API. <br> _In the example used, we passed all the attributes of the Topic class, which will have all the attributes of more classes, which is bad!_
+DTOClass, is a class that will **only has the necessary attributes**, that is, there is greater flexibility in choosing what will be in the API. <br> _In the last example, we passed all the attributes of the Topic class, which will have all the attributes of more classes, which is bad!_
 
 TopicDTO:
 ```java
@@ -158,65 +218,23 @@ public class TopicController {
 Spring will return the .json below:
 ```json
 [
-	{
-	"id":null,  
-	"title":"Doubt",  
-	"post":"API Doubt",  
-	"creationDate":"2020-04-08T00:02:47.8391678"  
-	},  
-	{
-	"id":null,  
-	"title":"Doubt",  
-	"post":"API Doubt",  
-	"creationDate":"2020-04-08T00:02:47.8391678"  
-	},  
-	{
-	"id":null,  
-	"title":"Doubt",  
-	"post":"API Doubt",  
-	"creationDate":"2020-04-08T00:02:47.8391678"  
-	}  
+   {
+      "id":1,
+      "title":"Doubt",
+      "post":"Error when create the project",
+      "creationDate":"2019-05-05T18:00:00"
+   },
+   {
+      "id":2,
+      "title":"Doubt 2",
+      "post":"Project do not compile",
+      "creationDate":"2019-05-05T19:00:00"
+   },
+   {
+      "id":3,
+      "title":"Doubt 3",
+      "post":"HTML tag",
+      "creationDate":"2019-05-05T20:00:00"
+   }
 ]
-```
-## <a name="jpa"></a>Implementing JPA and H2 Database
-
-As JPA and M2, have already been inserted into pom.xml, through **Spring Initializer**, we will only need to configure the H2 database, through **application.properties**.
-
-Altough, follow below the pom.xml:
-```xml
-<dependency>
-	<groupId>org.springframework.boot</groupId>
-	<artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-
-<dependency>
-	<groupId>com.h2database</groupId>
-	<artifactId>h2</artifactId>
-</dependency>
-```
-### Why use the H2 database?
-The H2 database:
-* Requires no installation;
-* It is easy to use;
-* It works in memory, that is, it means that when you restart it, the data is lost, however, if there was a .sql file, Spring is able to read and always add the data within the tables;
-
-### Configurating the application.properties
-
-```
-#DataSource
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.url=jdbc:h2:mem:forum
-spring.datasource.username=sa
-spring.datasource.password=
-
-#JPA
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-spring.jpa.hibernate.ddl-auto = update
-spring.jpa.show-sql = true
-
-#H2
-# console.enabled allow us to have a h2 console
-# console.path is how we're going to access the h2 interface
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
 ```
