@@ -2,14 +2,40 @@ package com.forum.forum.model;
 
 import java.time.LocalDateTime;
 
+import javax.persistence.Entity;
+
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+
+@Entity
 public class Answer {
 
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String post;
+	@ManyToOne
 	private Topic topic;
-	private LocalDateTime creationDate = LocalDateTime.now();
+	@ManyToOne
 	private User user;
+	private LocalDateTime creationDate = LocalDateTime.now();
 	private Boolean resolved = false;
+
+	/**
+	 * @deprecated hibernat only
+	 */
+	public Answer() {}
+	
+	
+	public Answer(String post, Topic topic, User user) {
+		super();
+		this.post = post;
+		this.topic = topic;
+		this.user = user;
+	}
+
 
 	@Override
 	public int hashCode() {
