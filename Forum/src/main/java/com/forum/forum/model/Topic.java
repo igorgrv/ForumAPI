@@ -1,15 +1,25 @@
-package com.forum.model;
+package com.forum.forum.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Answer {
+public class Topic {
 
 	private Long id;
+	private String title;
 	private String post;
-	private Topic topic;
 	private LocalDateTime creationDate = LocalDateTime.now();
+	private TopicStatus status = TopicStatus.NOT_ANSWERED;
 	private User user;
-	private Boolean resolved = false;
+	private Course course;
+	private List<Answer> answers = new ArrayList<>();
+
+	public Topic(String title, String post, Course course) {
+		this.title = title;
+		this.post = post;
+		this.course = course;
+	}
 
 	@Override
 	public int hashCode() {
@@ -27,7 +37,7 @@ public class Answer {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Answer other = (Answer) obj;
+		Topic other = (Topic) obj;
 		if (id == null) {
 			if (other.id != null)
 				return false;
@@ -44,20 +54,20 @@ public class Answer {
 		this.id = id;
 	}
 
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
 	public String getPost() {
 		return post;
 	}
 
 	public void setPost(String post) {
 		this.post = post;
-	}
-
-	public Topic getTopic() {
-		return topic;
-	}
-
-	public void setTopic(Topic topic) {
-		this.topic = topic;
 	}
 
 	public LocalDateTime getCreationDate() {
@@ -68,6 +78,14 @@ public class Answer {
 		this.creationDate = creationDate;
 	}
 
+	public TopicStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(TopicStatus status) {
+		this.status = status;
+	}
+
 	public User getUser() {
 		return user;
 	}
@@ -76,12 +94,20 @@ public class Answer {
 		this.user = user;
 	}
 
-	public Boolean getResolved() {
-		return resolved;
+	public Course getCurso() {
+		return course;
 	}
 
-	public void setResolved(Boolean resolved) {
-		this.resolved = resolved;
+	public void setCurso(Course course) {
+		this.course = course;
+	}
+
+	public List<Answer> getRespostas() {
+		return answers;
+	}
+
+	public void setRespostas(List<Answer> answers) {
+		this.answers = answers;
 	}
 
 }
