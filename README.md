@@ -1,11 +1,12 @@
 # Forum -  "API REST" from scratch
 ## About the Project
 
-The **purpose** of this project is to create a **Forum**, where we can post, remove, list  our doubts!
+The **purpose** of this project is to create a **Forum**, where we can post, remove, list our doubts. All that, via REST.
 
 ### Technologies/Database used
 -   Spring Boot;
 -   API Rest;
+-   PostMan;
 -   BeanValidation;
 -   JPA;
 -  H2 Database;
