@@ -21,8 +21,10 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [Simple example:](#simple)
 	* [Simplifying the example:](#simplifying)
 	* [Adding a filter:](#filter)
-5. [Models](#models)
-6. [Models](#models)
+5. [Post using REST](#post)
+	* [TopicForm/CourseRepository](#topicform)
+	* [Controller](#controllertopic)
+6. [Postman - Testing the PostMapping](#postman)
 7. [Models](#models)
 
 ## <a name="starting"></a>Starting the project
@@ -281,3 +283,92 @@ public interface TopicRepository extends JpaRepository<Topic, Long>{
 
 }
 ```
+## <a name="post"></a>Post using REST
+
+To perform a POST, we will use the `@PostMapping` annotation that will implement the same URI that we use with GET, therefore, as both use the same URI, we will implement `@RequestMapping ("/topic")` in the controller. <br> This way Spring will understand that all methods will default to **/topic/something**.
+
+```java
+@RestController
+@RequestMapping("/topic")
+public class TopicController {
+	
+	@GetMapping
+	public List<TopicDTO> list(String courseName){
+	}
+	
+	@PostMapping
+	public void save() {
+	}
+}
+```
+
+### <a name="topicform"></a>TopicForm/CourseRepository 
+When using "GET", we assign  -> "DTO";<br> For "POST", we assign  -> "FORM";
+
+#### What will this "FORM" have??  
+The **TopicForm** class will receive data that is not filled in by default in the Topic class (the creation date, for example, is already filled in), that is, it will have:
+* Title;  
+* Post;  
+* CourseName; (que ira retornar um Course)
+
+#### What is the purpose of Form classes?
+Like the DTO class, the Form class must return a complete object based on the data it receives.
+1. Create the method, **toTopic**, which should return a Topic.
+2. To return a Course, we will need a **CourseRepository**, where through the **courseName**, a course is returned.
+
+```JAVA
+public class TopicForm {
+
+	private String title, post, courseName;
+	
+	public Topic toTopic(CourseRepository courseRepository) {
+		Course course = courseRepository.findByName(this.courseName);
+		Topic topic = new Topic(title, post, course);
+		return topic;
+	}
+	//Getters and Setters
+} 
+
+public interface CourseRepository extends JpaRepository<Course, Long>{
+
+	Course findByName(String courseName);
+}
+
+```
+
+### <a name="controllertopic"></a> Controller 
+The TopicForm class will come from the data sent via body, for that we will use `@ RequestBody` and for carrying out a transaction, we will add the annotation` @ Transactional`.
+
+Example:
+```java
+@PostMapping
+@Transactional
+public void save(@RequestBody TopicForm form) {
+	Topic topic = form.toTopic(courseRepository);
+	topicRepository.save(topic);
+}
+```
+A method with void return, returns the code 200 in case of success, which means that it was successfully sent to the server, but what interests us is to know if the request was created, for this we wait for the code 201.
+1. We will change the save method, changing the void return to `ResponseEntity <TopicDTO>`. This return is responsible for returning code 201 with the DTO class information;
+2. To return a **ResponseEntity**, it is necessary to use the **created** method that receives a URI, like: `return ResponseEntity.created(uri)`;  
+3. To get the URI, we will use the **URI class** and we will ask Spring to inject the **UriComponentsBuilder class** in the method call, which has the **path** method responsible for indicating which path will be returned. In this case **("/topic/{id}")**, because we want to return the object, not the entire list.
+4. To fill the {id} we will use the **buildAndExtend** method passing **topic.getId ()**. Finally, it will be necessary to convert to uri, with the **toUri ()** method.
+5. With the URI completed, we will add to the return, the **body** method that will pass a **new topicDTO(topic)**.
+
+Controller completed:
+```java
+@PostMapping
+@Transactional
+public ResponseEntity<TopicDTO> save(@RequestBody TopicForm form, UriComponentsBuilder uriBuilder) {
+	Topic topic = form.toTopic(courseRepository);
+	topicRepository.save(topic);
+	
+	URI uri = uriBuilder.path("/topic/{id}").buildAndExpand(topic.getId()).toUri();
+	
+	return ResponseEntity.created(uri).body(new TopicDTO(topic));
+}
+```
+
+## <a name="postman"></a> Postman - Testing the PostMapping
+
+[postman.com](https://www.postman.com/downloads/)
