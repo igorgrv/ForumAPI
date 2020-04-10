@@ -38,7 +38,9 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [POSTMAN - Testing the Update](#deletetest )
 10. [Handling 404 error](#404)
 	* [New Controller](#404)
-11. [XXXX](#xxx)
+11. [Pagination/PageAble](#pagination)
+	* [POSTMAN - Testing the Pagination](#paginationtest)
+	* [@PageableDefault](#pageabledefault)
 12. [XXXX](#xxx)
 13. [XXXX](#xxx)
 14. [XXXX](#xxx)
@@ -694,5 +696,15 @@ public interface TopicRepository extends JpaRepository<Topic, Long>{
 ```
 
 ### <a name="paginationtest"></a>Testing the Pagination
+`http://localhost:8080/topic?page=0&size=10&sort=id,desc`<br>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/pagination.png?raw=true" width=400 height=400>
 
-<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/pagination.png?raw=true" width=300 height=400>
+#### <a name="pageabledefault"></a>PageableDefault
+When we don't pass any paging parameters, what will happen? We can set the pagination by default with the annotation `@PageableDefault(sort = "id", direction = Direction.DESC, page = 0, size = 10)`;
+
+```java
+@GetMapping
+	public Page<TopicDTO> list(@RequestParam(required = false) String courseName,
+			@PageableDefault(sort = "id", direction = Direction.DESC, page = 0, size = 10) Pageable pageable){
+}
+```
