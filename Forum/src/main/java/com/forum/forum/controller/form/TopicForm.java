@@ -1,12 +1,21 @@
 package com.forum.forum.controller.form;
 
+import javax.validation.constraints.NotEmpty;
+
+import org.hibernate.validator.constraints.Length;
+
 import com.forum.forum.model.Course;
 import com.forum.forum.model.Topic;
 import com.forum.forum.repository.CourseRepository;
+import com.sun.istack.NotNull;
 
 public class TopicForm {
 
-	private String title, post, courseName;
+	@NotNull @NotEmpty @Length(min = 5)
+	private String title, courseName;
+	
+	@NotNull @NotEmpty @Length(min = 10)
+	private String post;
 	
 	public Topic toTopic(CourseRepository courseRepository) {
 		Course course = courseRepository.findByName(this.courseName);

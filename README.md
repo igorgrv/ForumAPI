@@ -21,11 +21,14 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [Simple example:](#simple)
 	* [Simplifying the example:](#simplifying)
 	* [Adding a filter:](#filter)
-5. [Post using REST](#post)
+5. [POST using REST](#post)
 	* [TopicForm/CourseRepository](#topicform)
 	* [Controller](#controllertopic)
-6. [Postman - Testing the PostMapping](#postman)
-7. [Models](#models)
+6. [POSTMAN- Testing the PostMapping](#postman)
+7. [BeanValidation!](#postman)
+	8. [ControllerAdvice - ValidationHandler](#advice)
+8. [Models](#models)
+9. [Models](#models)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -374,4 +377,74 @@ public ResponseEntity<TopicDTO> save(@RequestBody TopicForm form, UriComponentsB
 Because the request is of the type @Post, it's not possible to test directly through the URL, for this there is the Postman software - [Download Postman](https://www.postman.com/downloads/);
 
 Look below, how to use the Postman:
-<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/postman.png?raw=true" width=900 height=300>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/postman.png?raw=true" width=850 height=400>
+
+## <a name="postman"></a>BeanValidation!
+So far, the POST method does not have any type of validation, that is, it is possible to forward the blank "title", for example. <br> In order for this not to happen, we need to make validations before saving a topic.
+* With "BeanValidation" all validations are done through annotations, such as: @NotBlank | @Notnull | @Size
+
+**Simple validation (without message)**
+```java
+public class TopicForm {
+
+	@NotNull @NotEmpty @Length(min = 5)
+	private String title, courseName;
+	
+	@NotNull @NotEmpty @Length(min = 10)
+	private String post;
+}
+
+//TopicController
+public ResponseEntity<TopicDTO> save(@RequestBody @Valid TopicForm form, UriComponentsBuilder uriBuilder) {
+	//code omitted
+}
+```
+
+### <a name="advice"></a>ControllerAdvice - ValidationErrorHandler
+#### But how do we know what the error is, without any message?
+When submitting an "unapproved" request, we want the **reason for the error** to be demonstrated. 
+* Spring has a solution for this type of scenario, where every time that an exception occurs, **Spring will automatically call an Interceptor**, called "ControllerAdvice".
+
+Explanation/Creation - ControllerAdvice:
+1. Create the package **_forum.config.validation_**;
+2. Create the class **_ValidationErrorHandler_** with the annotation `@RestControllerAdvice`;
+3. To warn Spring about which exception it will run the method, we use the `@ExceptionHandler` annotation, passing the `MethodArgumentNotValidException` class, which is responsible for handling @Valid;
+4. With the use of this method, **Spring understands that we are dealing with the validations** ourselves and then in case of error, it will "return" a 200 code (success) and not a 400 code (Bad request). To correct this we use the annotation `@ResponseStatus (code = BAD_REQUEST)`;
+5. In return, we want a list that contains the type of exception and the field that had an error (title, post or courseName), so we add the return as `List<ErrorDTO>`;
+6. We will implement a `List <FieldError>` which is responsible for catching field exceptions. As we want to display a list of exceptions by fields, we will create an empty `List <ErrorDTO>`. To insert each exception to our list, we will use forEach.
+7. To return the message, we will use the class `MessageSource`, which should be injected by Spring through `@Autowired`. This class has the method `getMessage`, which will receive the exception and a `LocaleContextHolder`, responsible for the language.
+
+
+```java
+public class ErrorDTO {
+
+	private String field;
+	private String exception;
+
+	public ErrorDTO(String field, String exception) {
+		this.field = field;
+		this.exception = exception;
+	}
+	//Getters and Setters
+}
+//-----------------------------------------------------------
+@RestControllerAdvice
+public class ValidationErrorHandler {
+	
+	@Autowired
+	private MessageSource messageSource;
+
+	@ResponseStatus(code = HttpStatus.BAD_REQUEST)
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public List<ErrorDTO> handle(MethodArgumentNotValidException exception) {
+		List<ErrorDTO> dto = new ArrayList<>();
+		List<FieldError> fieldErrors = exception.getBindingResult().getFieldErrors();
+		fieldErrors.forEach(e -> {
+			ErrorDTO error = new ErrorDTO(e.getField(), messageSource.getMessage(e, LocaleContextHolder.getLocale()));
+			dto.add(error);
+		});
+		return dto;
+	}
+}
+```
+* Spring will automatically understand that every exception must pass through the class!
