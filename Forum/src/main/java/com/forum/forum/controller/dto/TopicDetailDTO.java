@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import com.forum.forum.model.Topic;
 import com.forum.forum.model.TopicStatus;
 
-public class TopicDetailsDTO {
+public class TopicDetailDTO {
 
 	private Long id;
 	private String title, post;
@@ -17,7 +17,7 @@ public class TopicDetailsDTO {
 	private TopicStatus status;
 	private List<AnswerDTO> answers;
 	
-	public TopicDetailsDTO(Topic topic) {
+	public TopicDetailDTO(Topic topic) {
 		this.id = topic.getId();
 		this.title = topic.getTitle();
 		this.post = topic.getPost();
