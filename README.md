@@ -371,4 +371,7 @@ public ResponseEntity<TopicDTO> save(@RequestBody TopicForm form, UriComponentsB
 
 ## <a name="postman"></a> Postman - Testing the PostMapping
 
-[postman.com](https://www.postman.com/downloads/)
+Because the request is of the type @Post, it's not possible to test directly through the URL, for this there is the Postman software - [Download Postman](https://www.postman.com/downloads/);
+
+Look below, how to use the Postman:
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/postman.png?raw=true" width=900 height=300>
