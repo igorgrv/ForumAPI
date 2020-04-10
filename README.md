@@ -25,10 +25,12 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [TopicForm/CourseRepository](#topicform)
 	* [Controller](#controllertopic)
 6. [POSTMAN- Testing the PostMapping](#postman)
-7. [BeanValidation!](#postman)
+7. [BeanValidation](#postman)
 	8. [ControllerAdvice - ValidationHandler](#advice)
-8. [Models](#models)
+	9.  [Testing BeanValidation](#testingbean)
+8. [Detailing  the topics](#detail)
 9. [Models](#models)
+10. [Models](#models)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -450,7 +452,7 @@ public class ValidationErrorHandler {
 * Spring will automatically understand that every exception must pass through the class!
 
 
-### <a name="advice"></a>Testing BeanValidation
+### <a name="testingbean"></a>Testing BeanValidation
 Send the .json bellow, using the Postman and add into the Header > Key (Accept-Language) > Value (en-US)
 ```json
 {
@@ -459,4 +461,58 @@ Send the .json bellow, using the Postman and add into the Header > Key (Accept-L
 	"courseName":"Spring Boot"
 }
 ```
-<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/bean.PNG?raw=true" width=550 height=400>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/bean.png?raw=true" width=450 height=400>
+
+## <a name="detail"></a>Detailing Topics
+#### How?
+We will use `@GetMapping("/{id}")` and as it comes as part of the URL, we will use the `@PathVariable` annotation. <br>
+_By default, if the parameter name is the same as the URL (both are "id"), there is no need to put anything in @PathVariable("something")._
+
+As we want to detail the topic, we cannot use the **TopicDTO**, because **we want more information**. For this, we will create the **TopicDetailDTO** class!
+
+```java
+public class TopicDetailsDTO {
+
+	private Long id;
+	private String title, post;
+	private LocalDateTime creationDate;
+	private String userName;
+	private TopicStatus status;
+	private List<AnswerDTO> answers;
+	
+	public TopicDetailsDTO(Topic topic) {
+		this.id = topic.getId();
+		this.title = topic.getTitle();
+		this.post = topic.getPost();
+		this.creationDate = topic.getCreationDate();
+		this.userName = topic.getUser().getName();
+		this.status = topic.getStatus();
+		
+		this.answers = new ArrayList<>();
+		this.answers.addAll(topic.getRespostas().stream().map(AnswerDTO::new).collect(Collectors.toList()));
+	}
+}
+//--------------------------------------------------------
+public class AnswerDTO {
+
+	private Long id;
+	private String post;
+	private LocalDateTime creationDate;
+	private String userName;
+	
+	public AnswerDTO(Answer answer) {
+		this.id = answer.getId();
+		this.post = answer.getPost();
+		this.creationDate = answer.getCreationDate();
+		this.userName = answer.getUser().getName();
+	}
+}
+//--------------------------------------------------------
+//TopicController
+@GetMapping("/{id}")
+public TopicDetailsDTO detail(@PathVariable Long id) {
+	Topic topic = topicRepository.getOne(id);
+	TopicDetailsDTO details = new TopicDetailsDTO(topic); 
+	return details;
+}
+```
