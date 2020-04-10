@@ -24,13 +24,14 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 5. [POST using REST](#post)
 	* [TopicForm/CourseRepository](#topicform)
 	* [Controller](#controllertopic)
-6. [POSTMAN- Testing the PostMapping](#postman)
-7. [BeanValidation](#postman)
+	* [POSTMAN - Testing the Post](#postman)
+6. [BeanValidation](#postman)
 	* [ControllerAdvice - ValidationHandler](#advice)
-	* [Testing BeanValidation](#testingbean)
-8. [Detailing  the topics](#detail)
+	* [POSTMAN - Testing the BeanValidation](#testingbean)
+7. [Detailing  the topics](#detail)
+8. [Updating the topic](#update)
+	* [POSTMAN - Testing the Update](#updatetest)
 9. [Models](#models)
-10. [Models](#models)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -374,7 +375,7 @@ public ResponseEntity<TopicDTO> save(@RequestBody TopicForm form, UriComponentsB
 }
 ```
 
-## <a name="postman"></a> Postman - Testing the PostMapping
+### <a name="postman"></a> Testing the Post
 
 Because the request is of the type @Post, it's not possible to test directly through the URL, for this there is the Postman software - [Download Postman](https://www.postman.com/downloads/);
 
@@ -452,7 +453,7 @@ public class ValidationErrorHandler {
 * Spring will automatically understand that every exception must pass through the class!
 
 
-### <a name="testingbean"></a>Testing BeanValidation
+### <a name="testingbean"></a>Testing the BeanValidation
 Send the .json bellow, using the Postman and add into the Header > Key (Accept-Language) > Value (en-US)
 ```json
 {
@@ -516,5 +517,57 @@ public TopicDetailsDTO detail(@PathVariable Long id) {
 	return details;
 }
 ```
-Look the answer in Postman:
+Look the answer in Postman:<br>	
 <img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/detail.png?raw=true" width=450 height=400>
+
+## <a name="update"></a>Updating the topic
+It is similar to the `save`method, we should use`ResponseEntity`, but instead of using `@PostMapping`, we will use `@PutMapping`.<br>
+
+_Note: **@PutMapping** is used to update various attributes of the class.
+**@PetMapping** is used to use one or two attributes of the class.
+In general, the "PutMapping" method is used._
+
+* As we want to update a topic, we need to receive `{id}`. _The same way as used in the `save`method._
+* It is necessary to validate, _also the same way we validate in save_, but we will not use `TopicForm`, we will have a new Form for the update, called `UpdateTopicForm`.
+	* The `UpdateTopicForm` class, will update only the **title and post** attributes;
+	*   It will be necessary to create the `toTopic` method that will return a complete topic and where we will set the new information;
+	* The `toTopic` method will receive the id and also the `topicRepository` so that through the `topicRepository.getOne (id)` method it is possible to return a complete topic.
+
+```java
+//TopicController
+@PutMapping("/{id}")
+@Transactional
+public ResponseEntity<TopicDTO> update(@PathVariable Long id, @RequestBody @Valid UpdateTopicForm form){
+	Topic topic = form.toTopic(id, topicRepository);
+	return ResponseEntity.ok(new TopicDTO(topic));
+}
+
+//-------------------------------------------------------------
+public class UpdateTopicForm {
+
+	@NotNull @NotEmpty @Length(min = 5)
+	private String title;
+	
+	@NotNull @NotEmpty @Length(min = 10)
+	private String post;
+	
+	public Topic toTopic(Long id, TopicRepository topicRepository) {
+		Topic topic = topicRepository.getOne(id);
+		
+		topic.setTitle(title);
+		topic.setPost(post);
+		return topic;
+	}
+	//Getters and Setters
+}
+```
+### <a name="updatetest"></a>Testing the Update
+
+```json
+{
+	"title":"Doubt Updated",
+	"post":"Post Updated"
+}
+```
+
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/update.png?raw=true" width=650 height=400>
