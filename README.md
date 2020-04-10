@@ -1,4 +1,7 @@
 # Forum -  "API REST" from scratch
+
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/project.png?raw=true" width=650 height=400>
+
 ## About the Project
 
 The **purpose** of this project is to create a **Forum**, where we can post, remove, list  our doubts!
@@ -32,7 +35,9 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 8. [UPDATE](#update)
 	* [POSTMAN - Testing the Update](#updatetest)
 9. [DELETE](#remove)
-10. [DELETE](#remove)
+	* [POSTMAN - Testing the Update](#deletetest )
+10. [Handling 404 error](#404)
+	* [New Controller](#404)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -587,3 +592,44 @@ public ResponseEntity<?> delete(@PathVariable long id){
 ```
 ### <a name="deletetest"></a>Testing the Delete
 <img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/delete.png?raw=true" width=650 height=400>
+
+## <a name="404"></a>Handling 404 error
+ 
+When performing a query on a non-existent ID, by default a stackTrace is returned, however this is not a good practice. The ideal is that every time we use an ID, it is guaranteed that this ID exists and, otherwise, a 404 code is returned.
+
+### <a name="newcontroller"></a>New Controller
+To prevent the "id not found" error from occurring, we will use the `Optional` class, in all controller methods.
+
+``` java
+@GetMapping("/{id}")
+public ResponseEntity<TopicDetailDTO> detail(@PathVariable Long id) {
+	Optional<Topic> topic = topicRepository.findById(id);
+	if(topic.isPresent()) {
+		TopicDetailDTO details = new TopicDetailDTO(topic.get()); 
+		return ResponseEntity.ok(details);
+	}
+	return ResponseEntity.notFound().build();		
+}
+
+@PutMapping("/{id}")
+@Transactional
+public ResponseEntity<TopicDTO> update(@PathVariable Long id, @RequestBody @Valid UpdateTopicForm form){
+	Optional<Topic> optional = topicRepository.findById(id);
+	if(optional.isPresent()) {
+		Topic topic = form.toTopic(id, topicRepository);
+		return ResponseEntity.ok(new TopicDTO(topic));
+	}
+	return ResponseEntity.notFound().build();
+}
+
+@DeleteMapping("{id}")
+@Transactional
+public ResponseEntity<?> delete(@PathVariable long id){
+	Optional<Topic> optional = topicRepository.findById(id);
+	if(optional.isPresent()) {
+		topicRepository.deleteById(id);
+		return ResponseEntity.ok().build();
+	}
+	return ResponseEntity.notFound().build();
+}
+```

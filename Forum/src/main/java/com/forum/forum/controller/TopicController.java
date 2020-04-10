@@ -2,6 +2,7 @@ package com.forum.forum.controller;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 import javax.validation.Valid;
@@ -57,24 +58,35 @@ public class TopicController {
 	}
 	
 	@GetMapping("/{id}")
-	public TopicDetailDTO detail(@PathVariable Long id) {
-		Topic topic = topicRepository.getOne(id);
-		TopicDetailDTO details = new TopicDetailDTO(topic); 
-		return details;
+	public ResponseEntity<TopicDetailDTO> detail(@PathVariable Long id) {
+		Optional<Topic> topic = topicRepository.findById(id);
+		if(topic.isPresent()) {
+			TopicDetailDTO details = new TopicDetailDTO(topic.get()); 
+			return ResponseEntity.ok(details);
+		}
+		return ResponseEntity.notFound().build();		
 	}
 	
 	@PutMapping("/{id}")
 	@Transactional
 	public ResponseEntity<TopicDTO> update(@PathVariable Long id, @RequestBody @Valid UpdateTopicForm form){
-		Topic topic = form.toTopic(id, topicRepository);
-		return ResponseEntity.ok(new TopicDTO(topic));
+		Optional<Topic> optional = topicRepository.findById(id);
+		if(optional.isPresent()) {
+			Topic topic = form.toTopic(id, topicRepository);
+			return ResponseEntity.ok(new TopicDTO(topic));
+		}
+		return ResponseEntity.notFound().build();
 	}
 	
 	@DeleteMapping("{id}")
 	@Transactional
 	public ResponseEntity<?> delete(@PathVariable long id){
-		topicRepository.deleteById(id);
-		return ResponseEntity.ok().build();
+		Optional<Topic> optional = topicRepository.findById(id);
+		if(optional.isPresent()) {
+			topicRepository.deleteById(id);
+			return ResponseEntity.ok().build();
+		}
+		return ResponseEntity.notFound().build();
 	}
 	
 }
