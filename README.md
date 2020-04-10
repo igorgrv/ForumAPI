@@ -747,7 +747,32 @@ public Page<TopicDTO> list (){
 To test the cache memory, we will check if Spring will search the database, when calling the GET method a **second time**.
 
 First Time - Console log:<br>
-<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/first.png?raw=true" width=400 height=400>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/first.PNG?raw=true" width=400 height=400>
 <br>
 Second Time - Console log:<br>
-<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/second.png?raw=true" width=400 height=400>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/second.PNG?raw=true" width=400 height=300>
+
+### <a name="invalidating"></a>Invalidating the cache memory
+We must pay attention to the methods: **post, delete and update.**
+If we save the list in the cache memory and there is an insertion, the user will not "see" this update, as it was saved in the cache memory. 
+* To invalidate / clear the cache memory, we use the `@CacheEvict` annotation, passing the "value" that would be the cache id.
+
+```java
+@PostMapping
+@Transactional
+@CacheEvict(value = "listOfTopics", allEntries = true)
+public ResponseEntity<TopicDTO> save(){
+}
+
+@PutMapping("/{id}")
+@Transactional
+@CacheEvict(value = "listOfTopics", allEntries = true)
+public ResponseEntity<TopicDTO> update(){
+}
+
+@DeleteMapping("{id}")
+@Transactional
+@CacheEvict(value = "listOfTopics", allEntries = true)
+public ResponseEntity<?> delete(){
+}
+```
