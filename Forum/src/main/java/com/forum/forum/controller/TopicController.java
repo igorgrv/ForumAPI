@@ -7,8 +7,11 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,8 +42,9 @@ public class TopicController {
 	private CourseRepository courseRepository;
 
 	@GetMapping
-	public Page<TopicDTO> list(@RequestParam(required = false) String courseName, Pageable pageable){
-		System.out.println(courseName);
+	@Cacheable(value = "listOfTopics")
+	public Page<TopicDTO> list(@RequestParam(required = false) String courseName,
+			@PageableDefault(sort = "id", direction = Direction.DESC, page = 0, size = 10) Pageable pageable){
 		if (courseName == null) {
 			Page<Topic> topics = topicRepository.findAll(pageable);
 			return TopicDTO.toTopic(topics);

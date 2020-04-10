@@ -89,7 +89,8 @@ spring.datasource.password=
 #JPA
 spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
 spring.jpa.hibernate.ddl-auto = update
-spring.jpa.show-sql = true
+spring.jpa.properties.hibernate.format_sql = true
+spring.jpa.properties.hibernate.show_sql = true
 
 #H2
 # console.enabled allow us to have a h2 console
@@ -708,3 +709,45 @@ When we don't pass any paging parameters, what will happen? We can set the pagin
 			@PageableDefault(sort = "id", direction = Direction.DESC, page = 0, size = 10) Pageable pageable){
 }
 ```
+
+
+## <a name="cache"></a>Working with Cache
+Cache is very useful when we want to **improve the performance of the application**, however **we have to be careful with the methods that we will put in "cache"**.<br>
+**_The recommended methods to use "cache", are the methods that use tables that will suffer few data insertions, as a table of countries and states._**
+
+#### How to use?
+Add into the pom.xml the dependency below:
+```xml
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-cache</artifactId>
+</dependency>
+```
+To enable the cache, we must add the @EnableCaching annotation in the main method.
+```java
+@SpringBootApplication
+@EnableSpringDataWebSupport
+@EnableCaching
+public class ForumApplication {
+	public static void main(String[] args) {
+		SpringApplication.run(ForumApplication.class, args);
+	}
+}
+```
+To use cache memory, we need to add the `@Cacheable` annotation, which will warn Spring that the return should be saved in cache memory and we need to inform a "value" within the annotation, so that Spring knows which the cache search!
+
+```java
+@GetMapping
+@Cacheable(value = "listOfTopics")
+public Page<TopicDTO> list (){
+}
+```
+
+### <a name="cachetest"></a>Testing the Cache memory
+To test the cache memory, we will check if Spring will search the database, when calling the GET method a **second time**.
+
+First Time - Console log:<br>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/first.png?raw=true" width=400 height=400>
+<br>
+Second Time - Console log:<br>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/second.png?raw=true" width=400 height=400>
