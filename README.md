@@ -448,3 +448,15 @@ public class ValidationErrorHandler {
 }
 ```
 * Spring will automatically understand that every exception must pass through the class!
+
+
+### <a name="advice"></a>Testing BeanValidation
+Send the .json bellow, using the Postman and add into the Header > Key (Accept-Language) > Value (en-US)
+```json
+{
+	"title":"",
+	"post":"",
+	"courseName":"Spring Boot"
+}
+```
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/bean.PNG?raw=true" width=550 height=400>
