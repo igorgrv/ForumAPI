@@ -26,8 +26,8 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [Controller](#controllertopic)
 6. [POSTMAN- Testing the PostMapping](#postman)
 7. [BeanValidation](#postman)
-	8. [ControllerAdvice - ValidationHandler](#advice)
-	9.  [Testing BeanValidation](#testingbean)
+	* [ControllerAdvice - ValidationHandler](#advice)
+	* [Testing BeanValidation](#testingbean)
 8. [Detailing  the topics](#detail)
 9. [Models](#models)
 10. [Models](#models)
@@ -516,3 +516,5 @@ public TopicDetailsDTO detail(@PathVariable Long id) {
 	return details;
 }
 ```
+Look the answer in Postman:
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/detail.png?raw=true" width=450 height=400>
