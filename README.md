@@ -13,6 +13,8 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 -   JPA;
 -  H2 Database;
 -  Spring Initializer/DevTools
+- Cache
+- Spring Security
 
 ## Summary
 1. [Starting the project](#starting)
@@ -41,7 +43,8 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 11. [Pagination/PageAble](#pagination)
 	* [POSTMAN - Testing the Pagination](#paginationtest)
 	* [@PageableDefault](#pageabledefault)
-12. [XXXX](#xxx)
+12. [Working with Cache](#cache)
+	* [POSTMAN - Testing the Cache memory](#cachetest)
 13. [XXXX](#xxx)
 14. [XXXX](#xxx)
 15. [XXXX](#xxx)
@@ -710,7 +713,6 @@ When we don't pass any paging parameters, what will happen? We can set the pagin
 }
 ```
 
-
 ## <a name="cache"></a>Working with Cache
 Cache is very useful when we want to **improve the performance of the application**, however **we have to be careful with the methods that we will put in "cache"**.<br>
 **_The recommended methods to use "cache", are the methods that use tables that will suffer few data insertions, as a table of countries and states._**
@@ -776,3 +778,30 @@ public ResponseEntity<TopicDTO> update(){
 public ResponseEntity<?> delete(){
 }
 ```
+
+## <a name="security"></a>Spring Security
+#### Why to use?
+The API as it stands, has no security, that is, anyone who knows the address of the EndPoints, can perform any operation.<br> To perform an access control, we will use **Spring Security!**
+#### How to use?
+Add into the pom.xml the dependency below:
+```xml
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+```
+To enable the Spring Security, we must create a Class Configuration.
+1. Create the package inside the config package, called `config.security`;
+2. Create the `SecurityConfiguration` class;
+	* Inside this class, it will have all the Security Configuration;
+3. To inform Spring that this is a security configuration class, we will use the `@EnableWebSecurity` annotation and also the `@Configuration` ;
+4. Extend the class `WebSecurityConfigurerAdapter`;
+
+```Java
+@EnableWebSecurity
+@Configuration
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
+}
+```
+
+#### How to allow the users?
