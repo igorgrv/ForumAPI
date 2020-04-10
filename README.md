@@ -38,6 +38,12 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [POSTMAN - Testing the Update](#deletetest )
 10. [Handling 404 error](#404)
 	* [New Controller](#404)
+11. [XXXX](#xxx)
+12. [XXXX](#xxx)
+13. [XXXX](#xxx)
+14. [XXXX](#xxx)
+15. [XXXX](#xxx)
+16. [XXXX](#xxx)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -633,3 +639,60 @@ public ResponseEntity<?> delete(@PathVariable long id){
 	return ResponseEntity.notFound().build();
 }
 ```
+## <a name="pagination"></a>Pagination/PageAble
+Spring has the Pageable class, which has attributes that allow us to:
+* Set the page we want;
+* Set the number of elements on a page;
+* Sort by element;
+* Select the type of sorting (ASC or DESC);
+
+#### How to activate?
+To activate Pageable, we need to inform Spring that we are going to use it. For this, we will change the "main" class, adding the annotation `@EnableSpringDataWebSupport`.
+This way, Spring will allow us to pass the attributes through the URL.
+```java
+@SpringBootApplication
+@EnableSpringDataWebSupport
+public class ForumApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ForumApplication.class, args);
+	}
+
+}
+```
+#### How to use?
+1. In the list method, we will add Pageable to the method;
+	* Pay Attetion to the import!
+2. When using pagination, the return is no longer a `List <>` but a `Page <>`. For this, we must change the method returns.
+```java
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+//TopicController
+@GetMapping
+public Page<TopicDTO> list(@RequestParam(required = false) String courseName, Pageable pageable){
+	if (courseName == null) {
+		Page<Topic> topics = topicRepository.findAll(pageable);
+		return TopicDTO.toTopic(topics);
+	} else {
+		return TopicDTO.toTopic(topicRepository.findByCourseName(courseName, pageable));
+	}
+}
+
+//--------------------------------------------------------------
+//TopicDTO
+//Using the map method, for each topic, a "topicDTO" will be created
+public static Page<TopicDTO> toTopic(Page<Topic> topics) {
+	return topics.map(TopicDTO::new);
+}
+
+//--------------------------------------------------------------
+//TopicRepositoru
+public interface TopicRepository extends JpaRepository<Topic, Long>{
+	Page<Topic> findByCourseName(String courseName, Pageable pageable);
+}
+```
+
+### <a name="paginationtest"></a>Testing the Pagination
+
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/pagination.png?raw=true" width=300 height=400>

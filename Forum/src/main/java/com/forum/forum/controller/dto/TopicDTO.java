@@ -1,8 +1,8 @@
 package com.forum.forum.controller.dto;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
 
 import com.forum.forum.model.Topic;
 
@@ -19,8 +19,9 @@ public class TopicDTO {
 		this.creationDate = topic.getCreationDate();
 	}
 	
-	public static List<TopicDTO> toTopic(List<Topic> topics) {
-		return topics.stream().map(TopicDTO::new).collect(Collectors.toList());
+	//Using the map method, for each topic, a "topicDTO" will be created
+	public static Page<TopicDTO> toTopic(Page<Topic> topics) {
+		return topics.map(TopicDTO::new);
 	}
 	
 
