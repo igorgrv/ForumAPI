@@ -803,5 +803,102 @@ To enable the Spring Security, we must create a Class Configuration.
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 }
 ```
-
 #### How to allow the users?
+Our logic will be to allow the `List` and `ListDetail` methods to be **public**, while the others (delete, update and save) will require authentication.<br><br>
+
+In order to authenticate, it is necessary to use the User class, which must implement the UserDetails interface, which will also implement several methods.
+```java
+@Entity
+public class User implements UserDetails{
+
+	//GranteAuthority requires user profile types, as (Admin, Buyer, NormalUser)
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return null;
+	}
+	
+	@Override
+	public String getPassword() {
+		return this.password;
+	}
+
+	@Override
+	public String getUsername() {
+		return this.email;
+	}
+	
+	//As we don't have these attributes, we'll return true!
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return true;
+	}
+}
+```
+* After we implemented the UserDetails, the method `getAuthorities`, requires a List of user profile types, which we gonna have to create, implemeting the GrantedAuthority  Class
+```java
+@Entity
+public class Profile implements GrantedAuthority {
+
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	private String name;
+	
+	@Override
+	public String getAuthority() {
+		return this.name;
+	}
+} 
+
+
+//----------------------------------------------------------
+//Complement - User class
+@Entity
+public class User implements UserDetails{
+
+	private static final long serialVersionUID = 1L;
+	
+	//fetchtype Eager, will load all user profiles when the User class is called;
+	@ManyToMany(fetch = FetchType.EAGER)
+	private List<Profile> profiles;
+	
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		return this.profiles;
+	}
+}
+```
+
+Within the SecurityConfiguration class, there will be 3 `configure` methods essential for configuration.
+* `configure (AuthenticationManagerBulder auth)`: configures user authentication;
+* `configure (HttpSecurity http)`: configure who can access the URL;
+	```java
+	//We will allow the acess only for the GET method, otherwise, will be necessary the authentication sending the formLogin!
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http.authorizeRequests().
+		antMatchers(HttpMethod.GET, "/topic").permitAll().
+		antMatchers(HttpMethod.GET, "/topic/*").permitAll().
+		anyRequest().authenticated().
+		and().formLogin();
+	}
+	```
+* `configure (WebSecurity web)`: configure permission for static resources (css, js, images);
+
