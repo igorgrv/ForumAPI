@@ -21,17 +21,18 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [Simple example:](#simple)
 	* [Simplifying the example:](#simplifying)
 	* [Adding a filter:](#filter)
-5. [POST using REST](#post)
+5. [CREATE/POST](#post)
 	* [TopicForm/CourseRepository](#topicform)
 	* [Controller](#controllertopic)
 	* [POSTMAN - Testing the Post](#postman)
 6. [BeanValidation](#postman)
 	* [ControllerAdvice - ValidationHandler](#advice)
 	* [POSTMAN - Testing the BeanValidation](#testingbean)
-7. [Detailing  the topics](#detail)
-8. [Updating the topic](#update)
+7. [PUT/DETAIL](#detail)
+8. [UPDATE](#update)
 	* [POSTMAN - Testing the Update](#updatetest)
-9. [Models](#models)
+9. [DELETE](#remove)
+10. [DELETE](#remove)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -571,3 +572,18 @@ public class UpdateTopicForm {
 ```
 
 <img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/update.png?raw=true" width=650 height=400>
+
+## <a name="remove"></a>Removing topics
+To remove a topic, it is very similar to the `save` method. In this case, as we will not return any attributes, we will change the return of `ResponseEntity`, leaving it as an option `<?>`.
+
+```java
+//TopicController
+@DeleteMapping("{id}")
+@Transactional
+public ResponseEntity<?> delete(@PathVariable long id){
+	topicRepository.deleteById(id);
+	return ResponseEntity.ok().build();
+}
+```
+### <a name="deletetest"></a>Testing the Delete
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/delete.png?raw=true" width=650 height=400>

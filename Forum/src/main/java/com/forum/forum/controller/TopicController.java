@@ -8,6 +8,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -67,6 +68,13 @@ public class TopicController {
 	public ResponseEntity<TopicDTO> update(@PathVariable Long id, @RequestBody @Valid UpdateTopicForm form){
 		Topic topic = form.toTopic(id, topicRepository);
 		return ResponseEntity.ok(new TopicDTO(topic));
+	}
+	
+	@DeleteMapping("{id}")
+	@Transactional
+	public ResponseEntity<?> delete(@PathVariable long id){
+		topicRepository.deleteById(id);
+		return ResponseEntity.ok().build();
 	}
 	
 }
