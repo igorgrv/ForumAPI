@@ -887,7 +887,7 @@ public class User implements UserDetails{
 ```
 
 Within the SecurityConfiguration class, there will be 3 `configure` methods essential for configuration.
-* `configure (AuthenticationManagerBulder auth)`: configures user authentication;
+
 * `configure (HttpSecurity http)`: configure who can access the URL;
 	```java
 	//We will allow the acess only for the GET method, otherwise, will be necessary the authentication sending the formLogin!
@@ -900,5 +900,59 @@ Within the SecurityConfiguration class, there will be 3 `configure` methods esse
 		and().formLogin();
 	}
 	```
+	* Try to load the page - `http://localhost:8080/` <br> <img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/login.png?raw=true" width=380 height=300>
+* `configure (AuthenticationManagerBulder auth)`: configures user authentication;
+	*	In order to authenticate users, it is necessary to create a Service, which will be called `userDetailsService`;
+		1. Create the class `UserService`, inside the **_config.security_**, with the `@Service` Annotation;
+		2. Implement the `UserService` and implement the requested method;
+			* The method `loadUserByUserName` requires the login/email and and to locate the user, it is necessary to **create a repository**, which will search for the `User` based on the assigned **email**;
+		3.  To **encrypt the password** that will be passed by the user, we will use the method `.passwordEncoder(new BCryptPasswordEncoder())`
+			* We also need to change the password in our "data.sql", because now it's not longer "123456".
+			* To get new password encrypted by BCrypt, try to use the code below:
+			```java
+			public static void main(String[] args) {
+				System.out.println(new BCryptPasswordEncoder().encode("123456"));
+			}
+			```
+
+	```java
+	@Service
+	public class UserService implements UserDetailsService {
+
+		@Autowired
+		private UserRepository userRepository;
+		
+		@Override
+		public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+			Optional<User> user = userRepository.findByEmail(username);
+			if(user.isPresent()) {
+				return user.get();
+			}
+			throw new UsernameNotFoundException("User not found");
+		}
+	}
+
+	//----------------------------------------------------------------
+	//UserRepository
+	public interface UserRepository extends JpaRepository<User, Long>{
+		Optional<User> findByEmail(String email);
+	}
+
+	//----------------------------------------------------------------
+	//SecurityConfiguration
+	@EnableWebSecurity
+	@Configuration
+	public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
+		
+		@Autowired
+		private UserDetailsService userDetailsService;
+		
+		@Override
+		protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+			auth.userDetailsService(userDetailsService).passwordEncoder(new BCryptPasswordEncoder());
+		}
+	}
+	```
 * `configure (WebSecurity web)`: configure permission for static resources (css, js, images);
+
 
