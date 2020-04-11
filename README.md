@@ -45,8 +45,8 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [@PageableDefault](#pageabledefault)
 12. [Working with Cache](#cache)
 	* [POSTMAN - Testing the Cache memory](#cachetest)
-13. [XXXX](#xxx)
-14. [XXXX](#xxx)
+13. [Spring Security - Session](#security)
+14. [Java Json Web Token - Stateless](#jjwt)
 15. [XXXX](#xxx)
 16. [XXXX](#xxx)
 
@@ -779,7 +779,7 @@ public ResponseEntity<?> delete(){
 }
 ```
 
-## <a name="security"></a>Spring Security
+## <a name="security"></a>Spring Security - Sessions
 #### Why to use?
 The API as it stands, has no security, that is, anyone who knows the address of the EndPoints, can perform any operation.<br> To perform an access control, we will use **Spring Security!**
 #### How to use?
@@ -955,4 +955,19 @@ Within the SecurityConfiguration class, there will be 3 `configure` methods esse
 	```
 * `configure (WebSecurity web)`: configure permission for static resources (css, js, images);
 
+## <a name="jjwt"></a>Java Json Web Token  (JJWT)  - Stateless
+In the "Rest" model, **all communication has to be stateless**, that is, the server should not store authentication information in the session. To solve this problem, "Rest" will use the **_Json Web Token (JWT)_**
 
+#### How to use?
+Add into the pom.xml the dependency below:
+```xml
+<dependency>
+	<groupId>io.jsonwebtoken</groupId>
+	<artifactId>jjwt</artifactId>
+	<version>0.9.1</version>
+</dependency>
+```
+As we will no longer use login via session, but via Token, we have to make changes to the `configure` method:
+* We must remove the `and().FormLogin()`
+* Disable .csrf attacks - `csrf().Disable()`.
+* Disable sessions - `sessionManagement().SessionCreationPolicy(SessionCreationPolicy.STATELESS)`
