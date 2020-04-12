@@ -4,17 +4,17 @@
 
 ## About the Project
 
-The **purpose** of this project is to create a **Forum**, where we can post, remove, list  our doubts!
+The **purpose** of this project is to create a **Forum**, where we can post, remove, list  our doubts, via REST, using Spring Security and JJWT to authenticate the users;
 
 ### Technologies/Database used
 -   Spring Boot;
 -   API Rest;
+- JJWT - Cache;
+- Spring Security
 -   BeanValidation;
 -   JPA;
 -  H2 Database;
 -  Spring Initializer/DevTools
-- Cache
-- Spring Security
 
 ## Summary
 1. [Starting the project](#starting)
@@ -47,7 +47,8 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [POSTMAN - Testing the Cache memory](#cachetest)
 13. [Spring Security - Session](#security)
 14. [Java Json Web Token - Stateless](#jjwt)
-15. [XXXX](#xxx)
+	* [Returning the token as a response](#returningtoken)
+15. [Validating the Token](#validatingtoken)
 16. [XXXX](#xxx)
 
 ## <a name="starting"></a>Starting the project
@@ -1105,7 +1106,7 @@ Some changes will be necessaries to generate the Token and to get the Login.
 		}
 	}
 	```
-#### Returning the token as a response
+#### <a name="returningtoken"></a>Returning the token as a response
 In order to return the token, we need to create a `TokenDTO`, which will return the token and the type of authentication (**_Bearer_**);
 	* Change the `ResponseEntity<?>` sendint the TokenDTO;
 	* Remove the `sysout`;
@@ -1163,3 +1164,7 @@ Send the Auth into the Postman, as POST. We may recive the token, as below:
 	"typeAuthentication": "Bearer"
 }
 ```
+
+## <a name="validatingtoken"></a>Validating the Token
+Token validation will occur after implementing "Authorization" in the header of our request.<br>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/typeauthentication.png?raw=true" width=700 height=400>
