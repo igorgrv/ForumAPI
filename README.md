@@ -1168,3 +1168,74 @@ Send the Auth into the Postman, as POST. We may recive the token, as below:
 ## <a name="validatingtoken"></a>Validating the Token
 Token validation will occur after implementing "Authorization" in the header of our request.<br>
 <img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/typeauthentication.png?raw=true" width=700 height=400>
+OR
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/authentication2.png?raw=true" width=700 height=200>
+
+### Understanding how authentication works
+As this is a "Stateless" validation, the server will not store tokens, that is, every time the customer makes a request, **it will be necessary to check if the Token is in agreement**.<br>To validate each request, we need to implement a filter, which we will call `TokenAuthenticatorFilter`, which extends the `OncePerRequestFilter` class.
+1. Create inside the package **_config.security_**, the classe `TokenAuthenticatorFilter` extending the `OncePerRequestFilter` class;
+2. Add the abstract method `doFilterInternal`;
+	* This method must use the `filterChain.doFilter`;
+	* We need to get the token, so we will use the method `tokenValidate`;
+	* We need to verify if the token it's correct, with the method `
+
+```java
+public class TokenAuthenticatorFilter extends OncePerRequestFilter{
+
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		
+		String token = getToken(request);
+		boolean tokenIsValid = tokenService.isValid(token);
+			
+		filterChain.doFilter(request, response);
+	}
+
+	//this method will validate if the token was sent
+	private String getToken(HttpServletRequest request) {
+		String token = request.getHeader("Authorization");
+		if(token.isEmpty() || token == null || !token.startsWith("Bearer ")) {
+			return null;
+		}
+		return token.substring(7, token.length());
+	}
+
+}
+
+//-----------------------------------------------------------------
+//TokenService
+public boolean isValid(String token) {
+	try {
+		Jwts.parser().setSigningKey(this.secret).parseClaimsJws(token);
+		return true;
+	} catch (Exception e) {
+		return false;
+	}
+}
+```
+* After creating the filter, for Spring find this filter it will be necessary to include another attribute within the `configure` method of the `SecurityConfiguration` class.
+```java
+@EnableWebSecurity
+@Configuration
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
+
+	//As the Token filter can't inject the tokenService, we have inject here
+	@Autowired
+	private TokenService tokenService;
+
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http.authorizeRequests().
+		antMatchers(HttpMethod.GET, "/topic").permitAll().
+		antMatchers(HttpMethod.GET, "/topic/*").permitAll().
+		antMatchers(HttpMethod.POST, "/auth").permitAll().
+		anyRequest().authenticated().
+		and().csrf().disable().
+		sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
+		and().addFilterBefore(new TokenAuthenticatorFilter(tokenService), UsernamePasswordAuthenticationFilter.class);
+	}
+	
+	//omitted methods
+}
+``` 

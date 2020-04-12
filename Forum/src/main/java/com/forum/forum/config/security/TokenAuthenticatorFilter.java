@@ -11,19 +11,26 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 public class TokenAuthenticatorFilter extends OncePerRequestFilter{
 
+	private TokenService tokenService;
+	
+	public TokenAuthenticatorFilter(TokenService tokenService) {
+		this.tokenService = tokenService;
+	}
+
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		
-		String token = validateToken(request);
-		System.out.println(token);
+		String token = getToken(request);
 		
+		boolean tokenIsValid = tokenService.isValid(token);
+		System.out.println(tokenIsValid);
 		
 		filterChain.doFilter(request, response);
 	}
 
 	//this method will validate if the token was sent
-	private String validateToken(HttpServletRequest request) {
+	private String getToken(HttpServletRequest request) {
 		String token = request.getHeader("Authorization");
 		if(token.isEmpty() || token == null || !token.startsWith("Bearer ")) {
 			return null;
