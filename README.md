@@ -968,6 +968,198 @@ Add into the pom.xml the dependency below:
 </dependency>
 ```
 As we will no longer use login via session, but via Token, we have to make changes to the `configure` method:
-* We must remove the `and().FormLogin()`
+* We must remove the `and().FormLogin()` - because we won't use;
 * Disable .csrf attacks - `csrf().Disable()`.
 * Disable sessions - `sessionManagement().SessionCreationPolicy(SessionCreationPolicy.STATELESS)`
+
+As we no longer have a "UserController" (previously created internally in Spring), we will have to create a controller that will be responsible for the authentication part, called LoginController;
+The Controller will respond to requests ("/ auth") - _it's necessary to add this request into the `SecurityConfiguration`._
+
+```java
+//SecurityConfiguration
+@Override
+@Bean 
+protected AuthenticationManager authenticationManager() throws Exception {
+	// TODO Auto-generated method stub
+	return super.authenticationManager();
+}
+
+@Override
+protected void configure(HttpSecurity http) throws Exception {
+	http.authorizeRequests().
+	antMatchers(HttpMethod.GET, "/topic").permitAll().
+	antMatchers(HttpMethod.GET, "/topic/*").permitAll().
+	antMatchers(HttpMethod.POST, "/auth").permitAll().
+	anyRequest().authenticated().
+	and().csrf().disable().
+	sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+}
+```
+When the user logs in, through the "front", the "body" with the login and password information will be sent via Post. To get that information, we must use a LoginForm.
+
+```java
+public class LoginForm {
+ 
+	public String email, password;
+	//Getters and Setters
+}
+
+//-----------------------------------------------
+//LoginController
+@RestController
+@RequestMapping("/auth")
+public class LoginController {
+	
+	@PostMapping
+	public ResponseEntity<?> authenticat(@RequestBody @Valid LoginForm form){
+		//Testing if the login/password are coming by the request		
+		System.out.println(form.getEmail());
+		System.out.println(form.getPassword());
+		return ResponseEntity.ok().build();
+	}
+}
+```
+* To test, open the Postman  and send the request via POST `http://localhost:8080/auth`, using the .json below -  **_we must get a status 200_**
+```json
+{
+	"email":"student@email.com.br",
+	"password":"123456"
+}
+```
+#### Working inside the LoginController
+Some changes will be necessaries to generate the Token and to get the Login.
+* It's necessary to inject the class  `AuthenticationManager`, with `@Autowired`;
+	* Spring doesn't recognize this injection, so we have to add this class using the `SecurityConfiguration`, which has the method `AuthenticationManager`;
+* The `AuthenticationManager` has a method, called `authenticate()` that must recive a `UserNamePasswordAuthenticationToken(login,password)` object;
+	* It's necessary to create inside the `LoginForm` a method, that returns the login and password, to abstract from controller;
+* The class responsible for the token, it will be the `TokenService`, which will have the method `tokenGenerator(authentication)`, that recives the authentication variable;
+	* To generate the token, we have to use the JWTS library and add into the `application.properties` the code bellow:
+		```
+		# jwt
+		forum.jwt.secret=rm'!@N=Ke!~p8VTA2ZRK~nMDQX5Uvm!m'D&]{@Vr?G;2?XhbC:Qa#9#eMLN\}x3?JR3.2zr~v)gYF^8\:8>:XfB:Ww75N/emt9Yj[bQMNCWwW\J?N,nvH.<2\.r~w]*e~vgak)X"v8H`MH/7"2E`,^k@n<vE-wD3g9JWPy;CrY*.Kd2_D])=><D?YhBaSua5hW%{2]_FVXzb9`8FH^b[X3jzVER&:jw2<=c38=>L/zBq`}C6tT*cCSVC^c]-L}&/
+		forum.jwt.expiration=86400000
+		```
+	* To use the codes above, we need to inform the Spring how to find it. To do that, we must use `@Value("${forum.jwt.secret}")`;
+	```java
+	@Service
+	public class TokenService {
+
+		@Value("${forum.jwt.expiration}")
+		private String experation;
+		
+		@Value("${forum.jwt.secret}")
+		private String secret;
+		
+		@SuppressWarnings("deprecation")
+		public String tokenGenerator(Authentication authentication) {
+			/**
+			 * .setIssuer - inform, the API responsible for the token generation;
+			 * .setSubject - inform the user resposible;
+			 * .setIssuedAt - inform the Current date;
+			 * .setExpiration - inform the time to expire the token - in our case, it will be 1 day;
+			 * .signWith - it's the type of the algorith that will be generated, and our secret password;
+			 * .compact - transform to String; 
+			 */
+			User user = (User) authentication.getPrincipal();
+			return Jwts.builder()
+					.setIssuer("Igor - ForumAPI")
+					.setSubject(user.getId().toString())
+					.setIssuedAt(new Date())
+					.setExpiration(new Date(new Date().getTime() + experation))
+					.signWith(SignatureAlgorithm.HS256, secret)
+					.compact();
+		}
+	}
+
+	//-------------------------------------------------------------
+	//LoginController
+	@RestController
+	@RequestMapping("/auth")
+	public class LoginController {
+		
+		@Autowired
+		private AuthenticationManager authManager;
+		
+		@Autowired
+		private TokenService tokenService;
+
+		@PostMapping
+		public ResponseEntity<?> authenticat(@RequestBody @Valid LoginForm form){
+			UsernamePasswordAuthenticationToken login = form.toUser();
+			//we need to handle the error in case the login does not exist.
+			try {
+				//When Spring calls this method, this method will call the Service that will call the Repository, 
+				// that will validate the User and password;
+				Authentication authentication = authManager.authenticate(login);
+				
+				//If the authentication worked, we must return the token, from the JJWT library
+				// but the the token generation will be absctracted from controller, using the tokenService!
+				String token = tokenService.tokenGenerator(authentication);
+				System.out.println(token);
+				
+				return ResponseEntity.ok().build();
+			} catch (AuthenticationException e) {
+				return ResponseEntity.badRequest().build();
+			}
+			
+		}
+	}
+	```
+#### Returning the token as a response
+In order to return the token, we need to create a `TokenDTO`, which will return the token and the type of authentication (**_Bearer_**);
+	* Change the `ResponseEntity<?>` sendint the TokenDTO;
+	* Remove the `sysout`;
+```java
+public class TokenDTO {
+
+	private String token;
+	private String typeAuthentication;
+
+	public TokenDTO(String token, String typeAuthentication) {
+		this.token = token;
+		this.typeAuthentication = typeAuthentication;
+	}
+	//Getters
+}
+
+//-------------------------------------------------
+//LoginController
+@RestController
+@RequestMapping("/auth")
+public class LoginController {
+	
+	@Autowired
+	private AuthenticationManager authManager;
+	
+	@Autowired
+	private TokenService tokenService;
+
+	@PostMapping
+	public ResponseEntity<TokenDTO> authenticat(@RequestBody @Valid LoginForm form){
+		UsernamePasswordAuthenticationToken login = form.toUser();
+		
+		//we need to handle the error in case the login does not exist.
+		try {
+			//When Spring calls this method, this method will call the Service that will call the Repository, 
+			// that will validate the User and password;
+			Authentication authentication = authManager.authenticate(login);
+			
+			//If the authentication worked, we must return the token, from the JJWT library
+			// but the the token generation will be absctracted from controller, using the tokenService!
+			String token = tokenService.tokenGenerator(authentication);
+			
+			return ResponseEntity.ok(new TokenDTO(token, "Bearer"));
+		} catch (AuthenticationException e) {
+			return ResponseEntity.badRequest().build();
+		}
+		
+	}
+}
+```
+Send the Auth into the Postman, as POST. We may recive the token, as below:
+```json
+{
+	"token": "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJJZ29yIC0gRm9ydW1BUEkiLCJzdWIiOiIxIiwiaWF0IjoxNTg2NjcwNjY3LCJleHAiOjE1ODY3NTcwNjd9.DjHo6ynjQAjLUVT3QIwJ7f-_yiXLoqI5LmoiBOjfXn4",
+	"typeAuthentication": "Bearer"
+}
+```
