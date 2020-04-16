@@ -10,7 +10,8 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 -   Spring Boot;
 -   API Rest;
 - JJWT - Cache;
-- Spring Security
+- Spring Security;
+- Swagger + SpringFox;
 -   BeanValidation;
 -   JPA;
 -  H2 Database;
@@ -50,7 +51,7 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 	* [Returning the token as a response](#returningtoken)
 	* [Validating Token via Spring Security](#tokenspring)
 	* [Token Complete](#tokencomplete)
-15. [Swagger](#swagger)
+15. [Swagger + SpringFox](#swagger)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -1387,4 +1388,68 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 * Teste the methods DELETE, POST, PUT in the Postman;
 
 
-## <a name="swagger"></a>Swagger - documenting the API
+## <a name="swagger"></a>Swagger + SpringFox - documenting the API
+
+To make it easier for other developers / customers to consume the API, it is necessary that we create a document that shows how to make requests, methods and tests.
+
+[Swagger](https://swagger.io/solutions/api-documentation/) is a tool that reads the source code and creates the document, but together with Swagger, we have [SpringFox](https://springfox.github.io/springfox/) that uses the swagger library to return a front with API data!
+
+### How to use the SpringFox
+Add into the pom.xml the dependency below:
+```xml
+<dependency>
+	<groupId>io.springfox</groupId>
+	<artifactId>springfox-swagger2</artifactId>
+	<version>2.9.2</version>
+</dependency>
+
+<dependency>
+	<groupId>io.springfox</groupId>
+	<artifactId>springfox-swagger-ui</artifactId>
+	<version>2.9.2</version>
+</dependency>
+```
+To enable the Swagger, we must add the `@EnableSwagger2` annotation in the main method.
+```java
+@SpringBootApplication
+@EnableSpringDataWebSupport
+@EnableCaching
+@EnableSwagger2
+public class ForumApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ForumApplication.class, args);
+	}
+}
+```
+### Swagger Configuration
+Swagger needs some data to be informed, so that it knows how to build the documentation.
+
+1. Create the class `SwaggerConfiguration` inside the package **_config.swagger_**, with the annotation  `@Configuration`;
+2. Create the `forumAPI` method, which will return an object of type `Docket`, with the annotation `@Bean`;
+```java
+@Configuration
+public class SwaggerConfiguration {
+
+	@Bean
+	public Docket forumApi() {
+		return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.forum.forum"))
+                .paths(PathSelectors.ant("/**"))
+                .build()
+                .ignoredParameterTypes(User.class);
+	}
+}
+```
+* However, for the front/documentent be displayed, it will be necessary to enable authorizations in `SecurityCofiguration`!
+	```java
+	@Override
+	public void configure(WebSecurity web) throws Exception {
+		web.ignoring()
+        .antMatchers("/**.html", "/v2/api-docs", "/webjars/**", "/configuration/**", "/swagger-resources/**");
+	}
+	```
+
+Enter into the URL: `http://localhost:8080/swagger-ui.html` <br>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/swagger.PNG?raw=true" width=330 height=400>
