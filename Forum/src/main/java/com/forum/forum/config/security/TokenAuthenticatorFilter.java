@@ -7,26 +7,41 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.forum.forum.model.User;
+import com.forum.forum.repository.UserRepository;
 
 public class TokenAuthenticatorFilter extends OncePerRequestFilter{
 
 	private TokenService tokenService;
+	private UserRepository userRepository;
 	
-	public TokenAuthenticatorFilter(TokenService tokenService) {
+	public TokenAuthenticatorFilter(TokenService tokenService, UserRepository userRepository) {
 		this.tokenService = tokenService;
+		this.userRepository = userRepository;
 	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		
+
 		String token = getToken(request);
-		
 		boolean tokenIsValid = tokenService.isValid(token);
-		System.out.println(tokenIsValid);
-		
+		if (tokenIsValid) {
+			authUser(token);
+		}		
 		filterChain.doFilter(request, response);
+	}
+
+	private void authUser(String token) {
+		Long idUser = tokenService.getUserId(token);
+		User user = userRepository.findById(idUser).get();
+		UsernamePasswordAuthenticationToken authentication= new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 
 	//this method will validate if the token was sent

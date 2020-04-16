@@ -48,8 +48,9 @@ The **purpose** of this project is to create a **Forum**, where we can post, rem
 13. [Spring Security - Session](#security)
 14. [Java Json Web Token - Stateless](#jjwt)
 	* [Returning the token as a response](#returningtoken)
-15. [Validating the Token](#validatingtoken)
-16. [XXXX](#xxx)
+	* [Validating Token via Spring Security](#tokenspring)
+	* [Token Complete](#tokencomplete)
+15. [Swagger](#swagger)
 
 ## <a name="starting"></a>Starting the project
 1. Create the artifact: **forum**;
@@ -1177,7 +1178,7 @@ As this is a "Stateless" validation, the server will not store tokens, that is, 
 2. Add the abstract method `doFilterInternal`;
 	* This method must use the `filterChain.doFilter`;
 	* We need to get the token, so we will use the method `tokenValidate`;
-	* We need to verify if the token it's correct, with the method `
+	* We need to verify if the token it's correct, with the method `isValid`;
 
 ```java
 public class TokenAuthenticatorFilter extends OncePerRequestFilter{
@@ -1239,3 +1240,151 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
 	//omitted methods
 }
 ``` 
+## <a name="tokenspring"></a>Validating Token via Spring Security
+
+Once it has been verified that the token is valid, we need to inform SpringSecurity that the user is allowed to execute the methods.
+
+1. Create the `authUser` method inside `TokenAuthenticatorFilter`, which will allow the user to SpringSecurity;
+2. In the `authUser` method, we will use the class `SecurityContextHolder.getContext().SetAuthentication()` - this class requests an object of type **Authentication**, so we will create with the class `UsernamePasswordAuthenticationToken` that receives a (User, null password, user.getType ());
+3. The `token` object has the User, because in the `TokenService` class we pass through the `.setSubject (user.getId().ToString())` method - to receive this User by the token we will create a method in the `TokenService`, called `getUserId (token)`;
+4. With the Id it is possible to return the User, however it is necessary to use the UserRepository, which will have to be injected through the constructor, that is, it will be injected by the class `SecurityConfigutarion`;
+
+#### <a name="tokencomplete"></a>Token Complete
+``` java
+public class TokenAuthenticatorFilter extends OncePerRequestFilter{
+
+	private TokenService tokenService;
+	private UserRepository userRepository;
+	
+	public TokenAuthenticatorFilter(TokenService tokenService, UserRepository userRepository) {
+		this.tokenService = tokenService;
+		this.userRepository = userRepository;
+	}
+
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+		
+
+		String token = getToken(request);
+		boolean tokenIsValid = tokenService.isValid(token);
+		if (tokenIsValid) {
+			authUser(token);
+		}		
+		filterChain.doFilter(request, response);
+	}
+
+	private void authUser(String token) {
+		Long idUser = tokenService.getUserId(token);
+		User user = userRepository.findById(idUser).get();
+		UsernamePasswordAuthenticationToken authentication= new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+	}
+
+	//this method will validate if the token was sent
+	private String getToken(HttpServletRequest request) {
+		String token = request.getHeader("Authorization");
+		if(token.isEmpty() || token == null || !token.startsWith("Bearer ")) {
+			return null;
+		}
+		return token.substring(7, token.length());
+	}
+}
+
+//---------------------------------------------------------------------
+//TokenService
+@Service
+public class TokenService {
+
+	@Value("${forum.jwt.expiration}")
+	private String experation;
+	
+	@Value("${forum.jwt.secret}")
+	private String secret;
+	
+	public String tokenGenerator(Authentication authentication) {
+		User user = (User) authentication.getPrincipal();
+		/**
+		 * .setIssuer - inform, the API responsible for the token generation;
+		 * .setSubject - inform the user resposible;
+		 * .setIssuedAt - inform the Current date;
+		 * .setExpiration - inform the time to expire the token - in our case, it will be 1 day;
+		 * .signWith - it's the type of the algorith that will be generated, and our secret password;
+		 * .compact - transform to String; 
+		 */
+		return Jwts.builder()
+				.setIssuer("Igor - ForumAPI")
+				.setSubject(user.getId().toString())
+				.setIssuedAt(new Date())
+				.setExpiration(new Date(new Date().getTime() + Long.parseLong(experation)))
+				.signWith(SignatureAlgorithm.HS256, secret)
+				.compact();
+	}
+
+	public boolean isValid(String token) {
+		try {
+			Jwts.parser().setSigningKey(this.secret).parseClaimsJws(token);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	//Will return the id
+	public Long getUserId(String token) {
+		Claims claims = Jwts.parser().setSigningKey(this.secret).parseClaimsJws(token).getBody();
+		return Long.parseLong(claims.getSubject());
+	}
+}
+
+//---------------------------------------------------------------------
+//TokenService
+@EnableWebSecurity
+@Configuration
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter{
+	
+	@Autowired
+	private UserService userDetailsService;
+	
+	@Autowired
+	private TokenService tokenService;
+	
+	@Autowired
+	private UserRepository userRepository;
+	
+	@Override
+	@Bean
+	protected AuthenticationManager authenticationManager() throws Exception {
+		return super.authenticationManager();
+	}
+	
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.userDetailsService(userDetailsService).passwordEncoder(new BCryptPasswordEncoder());
+	}
+	
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http.authorizeRequests().
+		antMatchers(HttpMethod.GET, "/topic").permitAll().
+		antMatchers(HttpMethod.GET, "/topic/*").permitAll().
+		antMatchers(HttpMethod.POST, "/auth").permitAll().
+		anyRequest().authenticated().
+		and().csrf().disable().
+		sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).
+		and().addFilterBefore(new TokenAuthenticatorFilter(tokenService, userRepository), UsernamePasswordAuthenticationFilter.class);
+	}
+	
+	@Override
+	public void configure(WebSecurity web) throws Exception {
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(new BCryptPasswordEncoder().encode("123456"));
+	}
+}
+``` 
+* Teste the methods DELETE, POST, PUT in the Postman;
+
+
+## <a name="swagger"></a>Swagger - documenting the API
