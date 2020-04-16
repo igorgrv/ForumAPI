@@ -1438,8 +1438,19 @@ public class SwaggerConfiguration {
                 .apis(RequestHandlerSelectors.basePackage("com.forum.forum"))
                 .paths(PathSelectors.ant("/**"))
                 .build()
-                .ignoredParameterTypes(User.class);
-	}
+                .ignoredParameterTypes(User.class)
+                .globalOperationParameters(
+                        Arrays.asList(
+                                	new ParameterBuilder()
+                                    .name("Authorization")
+                                    .description("Token JWT Header")
+                                    .modelRef(new ModelRef("string"))
+                                    .parameterType("header")
+                                    .required(false)
+                                    .build() 
+                                    )
+                 );
+    }
 }
 ```
 * However, for the front/documentent be displayed, it will be necessary to enable authorizations in `SecurityCofiguration`!
@@ -1453,3 +1464,4 @@ public class SwaggerConfiguration {
 
 Enter into the URL: `http://localhost:8080/swagger-ui.html` <br>
 <img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/swagger.PNG?raw=true" width=330 height=400>
+<img src="https://github.com/igorgrv/ForumAPI/blob/master/readmeImage/swagger2.png?raw=true" width=430 height=800>
